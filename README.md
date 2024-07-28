@@ -6,6 +6,12 @@ This is the backend API for the Hotel Details Application, built with Node.js, E
 This Express.js application serves as the backend for the Hotel Details Application, providing RESTful API endpoints to manage hotel data stored in a PostgreSQL database.
 
 
+## Features
+
+- Use Node Express js for server creation
+- Use a configuration JSON file for credentials, such as DB access.
+  - Handle status code property with property response/error message (200 for success, 404 for not found, etc.)
+- PostgreSQL Database
 
 ## Technologies Used
 
