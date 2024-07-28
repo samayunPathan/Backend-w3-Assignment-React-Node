@@ -5,15 +5,27 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+
 const app = express();
 app.use(bodyParser.json());
+app.use(express.json());
+const cors = require('cors');
+
+
+
+const corsOptions = {
+  origin: 'http://localhost:3000', // Replace with your frontend's origin
+};
+
+app.use(cors(corsOptions)); 
+app.use(cors());
 
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'hotel_info',
-  password: 'p@stgress',
-  port: 5433,
+  password: '1234',
+  port: 5432,
 });
 
 const PORT = process.env.PORT || 3001;
@@ -35,7 +47,11 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // Limit file size to 5MB
+});
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -67,9 +83,14 @@ app.get('/hotels/:slug', async (req, res) => {
 // POST a new hotel with image upload
 app.post('/hotels', upload.array('images', 5), async (req, res) => {
   try {
-    const { slug, title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude } = req.body;
-    const images = req.files.map(file => '/uploads/' + file.filename);
+    // const { slug,title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude } = req.body;
+    // const images = req.files.map(file => '/uploads/' + file.filename);
+      const { slug, title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude } = req.body;
+      let images = [];
+      if (req.files && req.files.length > 0) {
+        images = req.files.map(file => '/uploads/' + file.filename);}
     
+    console.log(res.body)
     const result = await pool.query(
       'INSERT INTO HotelDetails (slug, images, title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
       [slug, images, title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude]
@@ -147,11 +168,13 @@ app.get('/hotels/:hotel_slug/rooms', async (req, res) => {
 });
 
 // POST a new room for a hotel with image upload
-app.post('/hotels/:hotel_slug/rooms', upload.single('room_image'), async (req, res) => {
+app.post('/hotels/:hotel_slug/rooms', upload.array('room_image'), async (req, res) => {
   try {
     const { hotel_slug } = req.params;
     const { room_slug, room_title, bedroom_count } = req.body;
-    const room_image = req.file ? '/uploads/' + req.file.filename : null;
+    let room_image = [];
+      if (req.files && req.files.length > 0) {
+        room_image = req.files.map(file => '/uploads/' + file.filename);}
     
     const result = await pool.query(
       'INSERT INTO RoomInformation (hotel_slug, room_slug, room_image, room_title, bedroom_count) VALUES ($1, $2, $3, $4, $5) RETURNING *',
