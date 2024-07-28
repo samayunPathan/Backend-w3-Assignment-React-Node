@@ -9,8 +9,8 @@ This Express.js application serves as the backend for the Hotel Details Applicat
 ## Features
 
 - Use Node Express js for server creation
-- Use a configuration JSON file for credentials, such as DB access.
-  - Handle status code property with property response/error message (200 for success, 404 for not found, etc.)
+- Use a configuration JSON file for credentials, such as DB access and for security.
+- Handle status code property with property response/error message (200 for success, 404 for not found, etc.)
 - PostgreSQL Database
 
 ## Technologies Used
