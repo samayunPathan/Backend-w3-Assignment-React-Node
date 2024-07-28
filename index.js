@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const config = require("./config.json"); 
 
 const app = express();
 app.use(bodyParser.json());
@@ -18,11 +19,11 @@ app.use(cors(corsOptions));
 app.use(cors());
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "hotel_info",
-  password: "1234",
-  port: 5432,
+  user: config.db.user,
+  host: config.db.host,
+  database: config.db.database,
+  password: config.db.password,
+  port: config.db.port,
 });
 
 const PORT = process.env.PORT || 3001;
@@ -53,13 +54,23 @@ const upload = multer({
 // Serve static files from the uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+
+function sendResponse(res, statusCode, message, data = null) {
+  const response = {
+    status: statusCode,
+    message: message,
+    data: data,
+  };
+  res.status(statusCode).json(response);
+}
+
 // GET all hotels
 app.get("/hotels", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM HotelDetails");
-    res.json(result.rows);
+    sendResponse(res, 200, "Hotels retrieved successfully", result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error retrieving hotels", { error: err.message });
   }
 });
 
@@ -72,11 +83,11 @@ app.get("/hotels/:slug", async (req, res) => {
       [slug]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Hotel not found" });
+      return sendResponse(res, 404, "Hotel not found");
     }
-    res.json(result.rows[0]);
+    sendResponse(res, 200, "Hotel retrieved successfully", result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error retrieving hotel", { error: err.message });
   }
 });
 
@@ -96,12 +107,18 @@ app.post("/hotels", upload.array("images", 5), async (req, res) => {
       latitude,
       longitude,
     } = req.body;
+
     let images = [];
     if (req.files && req.files.length > 0) {
       images = req.files.map((file) => "/uploads/" + file.filename);
+    } else {
+      const currentHotel = await pool.query(
+        "SELECT images FROM HotelDetails WHERE slug = $1",
+        [slug]
+      );
+      images = currentHotel.rows[0].images;
     }
 
-   
     const result = await pool.query(
       "INSERT INTO HotelDetails (slug, images, title, description, guest_count, bedroom_count, bathroom_count, amenities, host_information, address, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
       [
@@ -119,9 +136,9 @@ app.post("/hotels", upload.array("images", 5), async (req, res) => {
         longitude,
       ]
     );
-    res.status(201).json(result.rows[0]);
+    sendResponse(res, 201, "Hotel created successfully", result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error creating hotel", { error: err.message });
   }
 });
 
@@ -171,11 +188,11 @@ app.put("/hotels/:slug", upload.array("images", 5), async (req, res) => {
       ]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Hotel not found" });
+      return sendResponse(res, 404, "Hotel not found");
     }
-    res.json(result.rows[0]);
+    sendResponse(res, 200, "Hotel updated successfully", result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error updating hotel", { error: err.message });
   }
 });
 
@@ -188,7 +205,7 @@ app.delete("/hotels/:slug", async (req, res) => {
       [slug]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Hotel not found" });
+      return sendResponse(res, 404, "Hotel not found");
     }
     // Delete associated image files
     result.rows[0].images.forEach((imagePath) => {
@@ -196,13 +213,14 @@ app.delete("/hotels/:slug", async (req, res) => {
         if (err) console.error("Error deleting file:", err);
       });
     });
-    res.json({ message: "Hotel deleted successfully" });
+
+    sendResponse(res, 200, "Hotel deleted successfully");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error deleting hotel", { error: err.message });
   }
 });
 
-// ---- room -----
+// ----- room ----
 
 // GET all rooms for a hotel
 app.get("/hotels/:hotel_slug/rooms", async (req, res) => {
@@ -212,9 +230,9 @@ app.get("/hotels/:hotel_slug/rooms", async (req, res) => {
       "SELECT * FROM RoomInformation WHERE hotel_slug = $1",
       [hotel_slug]
     );
-    res.json(result.rows);
+    sendResponse(res, 200, "Rooms retrieved successfully", result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error retrieving rooms", { error: err.message });
   }
 });
 
@@ -235,9 +253,9 @@ app.post(
         "INSERT INTO RoomInformation (hotel_slug, room_slug, room_image, room_title, bedroom_count) VALUES ($1, $2, $3, $4, $5) RETURNING *",
         [hotel_slug, room_slug, room_image, room_title, bedroom_count]
       );
-      res.status(201).json(result.rows[0]);
+      sendResponse(res, 201, "Room created successfully", result.rows[0]);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendResponse(res, 500, "Error creating room", { error: err.message });
     }
   }
 );
@@ -267,11 +285,11 @@ app.put(
         [room_image, room_title, bedroom_count, hotel_slug, room_slug]
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ message: "Room not found" });
+        return sendResponse(res, 404, "Room not found");
       }
-      res.json(result.rows[0]);
+      sendResponse(res, 200, "Room updated successfully", result.rows[0]);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendResponse(res, 500, "Error updating room", { error: err.message });
     }
   }
 );
@@ -285,6 +303,10 @@ app.delete("/hotels/:hotel_slug/rooms/:room_slug", async (req, res) => {
       [hotel_slug, room_slug]
     );
     if (result.rows.length === 0) {
+      return sendResponse(res, 404, "Room not found");
+    }
+
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "Room not found" });
     }
     // Delete associated image file
@@ -293,8 +315,9 @@ app.delete("/hotels/:hotel_slug/rooms/:room_slug", async (req, res) => {
         if (err) console.error("Error deleting file:", err);
       });
     }
-    res.json({ message: "Room deleted successfully" });
+
+    sendResponse(res, 200, "Room deleted successfully");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponse(res, 500, "Error deleting room", { error: err.message });
   }
 });
