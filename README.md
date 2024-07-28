@@ -54,6 +54,11 @@ The server will run on http://localhost:3001 by default
 - PUT /hotels/:hotel_slug/rooms/:room_slug : Update a room
 - DELETE /hotels/:hotel_slug/rooms/:room_slug: Delete a room
 
+## Response:
+- 200: Success, returns hotel details.
+- 404: Hotel not found.
+- 500: Internal server error.
+
 ## Error Handling
 
 - Proper exception handling to prevent server crashes
