@@ -59,6 +59,7 @@ Install dependencies:
 `npm install`
 
 Set up the PostgreSQL database:
+create your own `config.json` file which include your database configuration data 
 
 #### Create a new database
 In Database.sql file have table data run in your query to create table.
