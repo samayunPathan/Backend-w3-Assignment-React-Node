@@ -2,6 +2,21 @@
 # Assigment : React-Node.js
 
 This is the backend API for the Hotel Details Application, built with Node.js, Express, and PostgreSQL.
+
+## Table of Contents
+
+- [Assignment: React-Node.js](#assignment-react-nodejs)
+- [Overview](#overview)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Setup and Installation](#setup-and-installation)
+- [Running the Server](#running-the-server)
+- [API Endpoints](#api-endpoints)
+- [Response](#response)
+- [Error Handling](#error-handling)
+- [Dependencies](#dependencies)
+- [Project Structure](#project-structure)
+
 ## Overview
 This Express.js application serves as the backend for the Hotel Details Application, providing RESTful API endpoints to manage hotel data stored in a PostgreSQL database.
 
@@ -20,6 +35,18 @@ This Express.js application serves as the backend for the Hotel Details Applicat
 - PostgreSQL
 - pg (PostgreSQL client for Node.js)
 
+## Project Structure 
+
+project/
+├── config.json            
+│    
+├── uploads/                
+├── database.sql            
+├── index.js              
+├── package.json            
+├── package-lock.json       
+├── .gitignore             
+├── README.md               
 
 
 
@@ -69,4 +96,13 @@ The server will run on http://localhost:3001 by default
 
 - Proper exception handling to prevent server crashes
 - Appropriate status codes and error messages in API responses
+
+## Dependencies
+
+- express
+- pg
+- multipart
+- cors
+- postgresql
+
 
